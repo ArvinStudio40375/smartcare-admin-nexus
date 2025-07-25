@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Gift, Plus, Eye, Calendar } from 'lucide-react';
+import { Gift, Plus, Eye, Calendar, Sparkles, Zap, DollarSign, Users, Clock } from 'lucide-react';
 
 interface Voucher {
   id: string;
@@ -125,127 +125,219 @@ const VoucherCreator: React.FC = () => {
     }
   };
 
+  const activeVouchers = vouchers.filter(v => v.status === 'active');
+  const totalVoucherValue = vouchers.reduce((sum, voucher) => sum + voucher.amount, 0);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-6 bg-gradient-to-br from-pink-50 via-white to-purple-50">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Buat Voucher Saldo</h2>
-        <Button onClick={loadVouchers} variant="outline">
-          Refresh
-        </Button>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+            Buat Voucher Saldo
+          </h2>
+          <p className="text-gray-600">Kelola dan buat voucher digital untuk member dan partner</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border">
+            <Gift className="w-5 h-5 text-pink-500" />
+            <span className="text-sm font-medium text-gray-700">
+              {vouchers.length} Voucher
+            </span>
+          </div>
+          <Button 
+            onClick={loadVouchers} 
+            variant="outline"
+            className="border-2 border-pink-200 text-pink-700 hover:bg-pink-50"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+              Refresh
+            </div>
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Create Voucher Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Buat Voucher Baru
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Plus className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xl font-bold">Buat Voucher Baru</div>
+                <div className="text-pink-100 text-sm font-normal">Generate voucher digital</div>
+              </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="voucherName">Nama Voucher</Label>
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="voucherName" className="text-sm font-semibold text-gray-700">
+                Nama Voucher
+              </Label>
               <Input
                 id="voucherName"
                 placeholder="Masukkan nama voucher"
                 value={voucherName}
                 onChange={(e) => setVoucherName(e.target.value)}
+                className="h-12 border-2 border-gray-200 focus:border-pink-500 rounded-lg"
               />
             </div>
 
-            <div>
-              <Label htmlFor="voucherCode">Kode Voucher</Label>
+            <div className="space-y-2">
+              <Label htmlFor="voucherCode" className="text-sm font-semibold text-gray-700">
+                Kode Voucher
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="voucherCode"
                   placeholder="Kode voucher"
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                  className="h-12 border-2 border-gray-200 focus:border-pink-500 rounded-lg"
                 />
-                <Button onClick={generateVoucherCode} variant="outline">
+                <Button 
+                  onClick={generateVoucherCode} 
+                  variant="outline"
+                  className="h-12 px-4 border-2 border-pink-200 text-pink-700 hover:bg-pink-50"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
                   Generate
                 </Button>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="amount">Nominal (Rp)</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="Masukkan nominal voucher"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="amount" className="text-sm font-semibold text-gray-700">
+                Nominal (Rp)
+              </Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="Masukkan nominal voucher"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="pl-10 h-12 border-2 border-gray-200 focus:border-pink-500 rounded-lg"
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="usageLimit">Batas Penggunaan</Label>
-              <Input
-                id="usageLimit"
-                type="number"
-                placeholder="Masukkan batas penggunaan"
-                value={usageLimit}
-                onChange={(e) => setUsageLimit(e.target.value)}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="usageLimit" className="text-sm font-semibold text-gray-700">
+                Batas Penggunaan
+              </Label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="usageLimit"
+                  type="number"
+                  placeholder="Masukkan batas penggunaan"
+                  value={usageLimit}
+                  onChange={(e) => setUsageLimit(e.target.value)}
+                  className="pl-10 h-12 border-2 border-gray-200 focus:border-pink-500 rounded-lg"
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="validUntil">Berlaku Hingga</Label>
-              <Input
-                id="validUntil"
-                type="datetime-local"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="validUntil" className="text-sm font-semibold text-gray-700">
+                Berlaku Hingga
+              </Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="validUntil"
+                  type="datetime-local"
+                  value={validUntil}
+                  onChange={(e) => setValidUntil(e.target.value)}
+                  className="pl-10 h-12 border-2 border-gray-200 focus:border-pink-500 rounded-lg"
+                />
+              </div>
             </div>
 
             <Button 
               onClick={createVoucher} 
               disabled={loading}
-              className="w-full"
+              className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              {loading ? 'Membuat...' : 'Buat Voucher'}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Membuat...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Buat Voucher
+                </div>
+              )}
             </Button>
           </CardContent>
         </Card>
 
         {/* Voucher Statistics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="w-5 h-5" />
-              Statistik Voucher
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Gift className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xl font-bold">Statistik Voucher</div>
+                <div className="text-purple-100 text-sm font-normal">Ringkasan voucher digital</div>
+              </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">Voucher Aktif</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {vouchers.filter(v => v.status === 'active').length}
-                  </p>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div className="relative overflow-hidden bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm font-medium">Voucher Aktif</p>
+                      <p className="text-3xl font-bold">{activeVouchers.length}</p>
+                    </div>
+                    <div className="p-3 bg-white/20 rounded-lg">
+                      <Gift className="w-8 h-8" />
+                    </div>
+                  </div>
                 </div>
-                <Gift className="w-8 h-8 text-green-600" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
               </div>
 
-              <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">Total Voucher</p>
-                  <p className="text-2xl font-bold text-blue-600">{vouchers.length}</p>
+              <div className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-100 text-sm font-medium">Total Voucher</p>
+                      <p className="text-3xl font-bold">{vouchers.length}</p>
+                    </div>
+                    <div className="p-3 bg-white/20 rounded-lg">
+                      <Eye className="w-8 h-8" />
+                    </div>
+                  </div>
                 </div>
-                <Eye className="w-8 h-8 text-blue-600" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
               </div>
 
-              <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">Total Nominal</p>
-                  <p className="text-lg font-bold text-purple-600">
-                    Rp {vouchers.reduce((sum, voucher) => sum + voucher.amount, 0).toLocaleString('id-ID')}
-                  </p>
+              <div className="relative overflow-hidden bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-purple-100 text-sm font-medium">Total Nominal</p>
+                      <p className="text-xl font-bold">
+                        Rp {totalVoucherValue.toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-white/20 rounded-lg">
+                      <DollarSign className="w-8 h-8" />
+                    </div>
+                  </div>
                 </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
               </div>
             </div>
           </CardContent>
@@ -253,47 +345,95 @@ const VoucherCreator: React.FC = () => {
       </div>
 
       {/* Voucher List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Voucher</CardTitle>
+      <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-t-lg">
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Eye className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xl font-bold">Daftar Voucher</div>
+              <div className="text-indigo-100 text-sm font-normal">Kelola semua voucher digital</div>
+            </div>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {vouchers.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Belum ada voucher yang dibuat
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Gift className="w-8 h-8 text-gray-400" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">Belum ada voucher</h3>
+                <p className="text-gray-500">Buat voucher pertama untuk memulai</p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
               {vouchers.map((voucher) => (
                 <div
                   key={voucher.id}
-                  className="flex justify-between items-center p-4 border rounded-lg"
+                  className="group relative overflow-hidden bg-gradient-to-r from-white to-gray-50 rounded-xl p-6 border border-gray-200 hover:border-purple-200 hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium">{voucher.voucher_name}</h3>
-                      <Badge variant={voucher.status === 'active' ? 'default' : 'secondary'}>
-                        {voucher.status}
-                      </Badge>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <Gift className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900">{voucher.voucher_name}</h3>
+                          <Badge 
+                            variant={voucher.status === 'active' ? 'default' : 'secondary'}
+                            className={voucher.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                          >
+                            {voucher.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">Kode:</span>
+                          <span className="font-mono font-bold bg-gray-100 px-2 py-1 rounded text-sm">
+                            {voucher.voucher_code}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">Nominal:</span>
+                          <span className="font-bold text-green-600">
+                            Rp {voucher.amount.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          <span>Digunakan: {voucher.used_count}/{voucher.usage_limit}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>Berlaku hingga: {new Date(voucher.valid_until).toLocaleDateString('id-ID')}</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">
-                      Kode: <span className="font-mono font-bold">{voucher.voucher_code}</span>
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Nominal: Rp {voucher.amount.toLocaleString('id-ID')} | 
-                      Digunakan: {voucher.used_count}/{voucher.usage_limit}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Berlaku hingga: {new Date(voucher.valid_until).toLocaleString('id-ID')}
-                    </p>
+                    
+                    <Button
+                      onClick={() => toggleVoucherStatus(voucher.id, voucher.status)}
+                      variant={voucher.status === 'active' ? 'destructive' : 'default'}
+                      size="sm"
+                      className={`${
+                        voucher.status === 'active' 
+                          ? 'bg-red-500 hover:bg-red-600' 
+                          : 'bg-green-500 hover:bg-green-600'
+                      } text-white font-semibold`}
+                    >
+                      {voucher.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => toggleVoucherStatus(voucher.id, voucher.status)}
-                    variant={voucher.status === 'active' ? 'destructive' : 'default'}
-                    size="sm"
-                  >
-                    {voucher.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
-                  </Button>
+                  
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-100/50 to-transparent rounded-full -mr-16 -mt-16 group-hover:from-purple-200/50 transition-all duration-300"></div>
                 </div>
               ))}
             </div>
