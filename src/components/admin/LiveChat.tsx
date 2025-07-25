@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { MessageSquare, Send, Users, Clock, User, MessageCircle, Online } from 'lucide-react';
+import { MessageSquare, Send, Users, Clock, User, MessageCircle, Wifi } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -152,7 +151,7 @@ const LiveChat: React.FC = () => {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border">
-            <Online className="w-5 h-5 text-green-500" />
+            <Wifi className="w-5 h-5 text-green-500" />
             <span className="text-sm font-medium text-gray-700">Online</span>
           </div>
           {totalUnreadMessages > 0 && (
