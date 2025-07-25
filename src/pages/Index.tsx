@@ -1,14 +1,46 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState, useEffect } from 'react';
+import SplashScreen from '@/components/SplashScreen';
+import LoginPage from '@/components/LoginPage';
+import AdminDashboard from '@/components/AdminDashboard';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [currentView, setCurrentView] = useState<'splash' | 'login' | 'dashboard'>('splash');
+
+  useEffect(() => {
+    // Check if admin is already logged in
+    const adminLogin = localStorage.getItem("admin_login");
+    if (adminLogin === "011090") {
+      setCurrentView('dashboard');
+    }
+  }, []);
+
+  const handleSplashComplete = () => {
+    const adminLogin = localStorage.getItem("admin_login");
+    if (adminLogin === "011090") {
+      setCurrentView('dashboard');
+    } else {
+      setCurrentView('login');
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setCurrentView('dashboard');
+  };
+
+  const handleLogout = () => {
+    setCurrentView('login');
+  };
+
+  if (currentView === 'splash') {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  if (currentView === 'login') {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  return <AdminDashboard onLogout={handleLogout} />;
 };
 
 export default Index;
