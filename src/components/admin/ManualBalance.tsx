@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Send, Users, Shield, Wallet, TrendingUp, DollarSign } from 'lucide-react';
+import { Send, Users, Shield, Wallet, TrendingUp, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface User {
   id: string;
@@ -22,30 +22,59 @@ const ManualBalance: React.FC = () => {
   const [partners, setPartners] = useState<User[]>([]);
   const [selectedUserType, setSelectedUserType] = useState<string>('');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     loadUsers();
   }, []);
 
   const loadUsers = async () => {
+    setLoadingUsers(true);
     try {
+      console.log('Loading users...');
       const [membersResult, partnersResult] = await Promise.all([
         supabase.from('members').select('id, full_name, email, balance').eq('status', 'active'),
         supabase.from('partners').select('id, business_name, email, balance').eq('status', 'active')
       ]);
 
-      if (membersResult.error) throw membersResult.error;
-      if (partnersResult.error) throw partnersResult.error;
+      if (membersResult.error) {
+        console.error('Error loading members:', membersResult.error);
+        throw membersResult.error;
+      }
+      if (partnersResult.error) {
+        console.error('Error loading partners:', partnersResult.error);
+        throw partnersResult.error;
+      }
+
+      console.log('Members loaded:', membersResult.data);
+      console.log('Partners loaded:', partnersResult.data);
 
       setMembers(membersResult.data || []);
       setPartners(partnersResult.data || []);
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error('Gagal memuat data pengguna');
+    } finally {
+      setLoadingUsers(false);
     }
+  };
+
+  const handleUserTypeChange = (value: string) => {
+    setSelectedUserType(value);
+    setSelectedUserId('');
+    setSelectedUser(null);
+  };
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    const users = selectedUserType === 'member' ? members : partners;
+    const user = users.find(u => u.id === userId);
+    setSelectedUser(user || null);
+    console.log('Selected user:', user);
   };
 
   const sendManualBalance = async () => {
@@ -61,50 +90,85 @@ const ManualBalance: React.FC = () => {
     }
 
     setLoading(true);
+    console.log('Sending manual balance:', {
+      userType: selectedUserType,
+      userId: selectedUserId,
+      amount: numAmount,
+      description
+    });
 
     try {
       // Get current balance first
       const table = selectedUserType === 'member' ? 'members' : 'partners';
+      console.log('Fetching current balance from table:', table);
+      
       const { data: currentUser, error: fetchError } = await supabase
         .from(table)
         .select('balance')
         .eq('id', selectedUserId)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching current user:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Current user balance:', currentUser.balance);
 
       // Update user balance
-      const newBalance = currentUser.balance + numAmount;
+      const newBalance = (currentUser.balance || 0) + numAmount;
+      console.log('New balance will be:', newBalance);
+
       const { error: balanceError } = await supabase
         .from(table)
         .update({ balance: newBalance })
         .eq('id', selectedUserId);
 
-      if (balanceError) throw balanceError;
+      if (balanceError) {
+        console.error('Error updating balance:', balanceError);
+        throw balanceError;
+      }
+
+      console.log('Balance updated successfully');
 
       // Create transaction record
+      const transactionData = {
+        transaction_type: 'manual_credit',
+        to_user_id: selectedUserId,
+        to_user_type: selectedUserType,
+        amount: numAmount,
+        description: description,
+        status: 'completed',
+        created_at: new Date().toISOString()
+      };
+
+      console.log('Creating transaction record:', transactionData);
+
       const { error: transactionError } = await supabase
         .from('transactions')
-        .insert({
-          transaction_type: 'manual_credit',
-          to_user_id: selectedUserId,
-          to_user_type: selectedUserType,
-          amount: numAmount,
-          description: description,
-          status: 'completed'
-        });
+        .insert(transactionData);
 
-      if (transactionError) throw transactionError;
+      if (transactionError) {
+        console.error('Error creating transaction:', transactionError);
+        throw transactionError;
+      }
 
-      toast.success('Saldo berhasil dikirim');
+      console.log('Transaction created successfully');
+
+      toast.success(`Saldo berhasil dikirim ke ${selectedUser?.full_name || selectedUser?.business_name}`);
+      
+      // Reset form
       setSelectedUserType('');
       setSelectedUserId('');
+      setSelectedUser(null);
       setAmount('');
       setDescription('');
-      loadUsers();
+      
+      // Reload users to get updated balances
+      await loadUsers();
     } catch (error) {
       console.error('Error sending balance:', error);
-      toast.error('Gagal mengirim saldo');
+      toast.error('Gagal mengirim saldo: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -118,11 +182,11 @@ const ManualBalance: React.FC = () => {
     return user.full_name || user.business_name || 'Unknown';
   };
 
-  const totalMemberBalance = members.reduce((sum, member) => sum + member.balance, 0);
-  const totalPartnerBalance = partners.reduce((sum, partner) => sum + partner.balance, 0);
+  const totalMemberBalance = members.reduce((sum, member) => sum + (member.balance || 0), 0);
+  const totalPartnerBalance = partners.reduce((sum, partner) => sum + (partner.balance || 0), 0);
 
   return (
-    <div className="space-y-8 p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="space-y-8 p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
       <div className="flex justify-between items-center">
         <div className="space-y-2">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -155,7 +219,7 @@ const ManualBalance: React.FC = () => {
               <Label htmlFor="userType" className="text-sm font-semibold text-gray-700">
                 Tipe Pengguna
               </Label>
-              <Select value={selectedUserType} onValueChange={setSelectedUserType}>
+              <Select value={selectedUserType} onValueChange={handleUserTypeChange}>
                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg">
                   <SelectValue placeholder="Pilih tipe pengguna" />
                 </SelectTrigger>
@@ -181,23 +245,43 @@ const ManualBalance: React.FC = () => {
                 <Label htmlFor="userId" className="text-sm font-semibold text-gray-700">
                   Pilih Pengguna
                 </Label>
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg">
-                    <SelectValue placeholder="Pilih pengguna" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getCurrentUsers().map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        <div className="flex justify-between items-center w-full">
-                          <span className="font-medium">{getUserName(user)}</span>
-                          <span className="text-sm text-gray-500 ml-2">
-                            Saldo: Rp {user.balance.toLocaleString('id-ID')}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center h-12 border-2 border-gray-200 rounded-lg">
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-2 text-sm text-gray-500">Loading...</span>
+                  </div>
+                ) : (
+                  <Select value={selectedUserId} onValueChange={handleUserSelect}>
+                    <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg">
+                      <SelectValue placeholder="Pilih pengguna" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getCurrentUsers().map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          <div className="flex justify-between items-center w-full">
+                            <span className="font-medium">{getUserName(user)}</span>
+                            <span className="text-sm text-gray-500 ml-2">
+                              Saldo: Rp {(user.balance || 0).toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
+            {selectedUser && (
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium text-blue-900">Pengguna Dipilih</span>
+                </div>
+                <p className="text-sm text-blue-800">
+                  <strong>{getUserName(selectedUser)}</strong> | 
+                  Saldo saat ini: <strong>Rp {(selectedUser.balance || 0).toLocaleString('id-ID')}</strong>
+                </p>
               </div>
             )}
 
@@ -234,7 +318,7 @@ const ManualBalance: React.FC = () => {
             <Button 
               onClick={sendManualBalance} 
               disabled={loading || !selectedUserType || !selectedUserId || !amount || !description}
-              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="flex items-center gap-2">

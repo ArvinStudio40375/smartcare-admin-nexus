@@ -14,10 +14,13 @@ import {
   LogOut,
   Menu,
   X,
-  Shield
+  Shield,
+  Bell,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -43,18 +46,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   });
 
   const menuItems = [
-    { id: 'partner_verification', title: 'Verifikasi Mitra', icon: UserCheck, color: 'bg-blue-500', description: 'Lihat dan verifikasi mitra baru' },
-    { id: 'topup_confirmation', title: 'Konfirmasi Top Up', icon: CreditCard, color: 'bg-green-500', description: 'Setujui permintaan top up' },
-    { id: 'manual_balance', title: 'Kirim Saldo Manual', icon: Send, color: 'bg-purple-500', description: 'Transfer saldo ke user/mitra' },
-    { id: 'user_management', title: 'Manajemen User', icon: Users, color: 'bg-indigo-500', description: 'Kelola akun pengguna' },
-    { id: 'partner_management', title: 'Manajemen Mitra', icon: Shield, color: 'bg-teal-500', description: 'Edit dan kelola data mitra' },
-    { id: 'voucher_creator', title: 'Buat Voucher Saldo', icon: Gift, color: 'bg-pink-500', description: 'Generate voucher digital' },
-    { id: 'transaction_history', title: 'Riwayat Transaksi', icon: History, color: 'bg-orange-500', description: 'Lihat semua transaksi' },
-    { id: 'orders', title: 'Pesanan Masuk', icon: ShoppingCart, color: 'bg-red-500', description: 'Pesanan layanan terbaru' },
-    { id: 'statistics', title: 'Statistik & Laporan', icon: BarChart3, color: 'bg-yellow-500', description: 'Analitik dan laporan' },
-    { id: 'live_chat', title: 'Live Chat', icon: MessageSquare, color: 'bg-cyan-500', description: 'Chat dengan user/mitra' },
-    { id: 'settings', title: 'Setting Aplikasi', icon: Settings, color: 'bg-gray-500', description: 'Pengaturan sistem' },
-    { id: 'logout', title: 'Logout', icon: LogOut, color: 'bg-red-600', description: 'Keluar dari dashboard' }
+    { id: 'partner_verification', title: 'Verifikasi Mitra', icon: UserCheck, color: 'from-blue-500 to-blue-600', description: 'Lihat dan verifikasi mitra baru' },
+    { id: 'topup_confirmation', title: 'Konfirmasi Top Up', icon: CreditCard, color: 'from-green-500 to-green-600', description: 'Setujui permintaan top up' },
+    { id: 'manual_balance', title: 'Kirim Saldo Manual', icon: Send, color: 'from-purple-500 to-purple-600', description: 'Transfer saldo ke user/mitra' },
+    { id: 'user_management', title: 'Manajemen User', icon: Users, color: 'from-indigo-500 to-indigo-600', description: 'Kelola akun pengguna' },
+    { id: 'partner_management', title: 'Manajemen Mitra', icon: Shield, color: 'from-teal-500 to-teal-600', description: 'Edit dan kelola data mitra' },
+    { id: 'voucher_creator', title: 'Buat Voucher Saldo', icon: Gift, color: 'from-pink-500 to-pink-600', description: 'Generate voucher digital' },
+    { id: 'transaction_history', title: 'Riwayat Transaksi', icon: History, color: 'from-orange-500 to-orange-600', description: 'Lihat semua transaksi' },
+    { id: 'orders', title: 'Pesanan Masuk', icon: ShoppingCart, color: 'from-red-500 to-red-600', description: 'Pesanan layanan terbaru' },
+    { id: 'statistics', title: 'Statistik & Laporan', icon: BarChart3, color: 'from-yellow-500 to-yellow-600', description: 'Analitik dan laporan' },
+    { id: 'live_chat', title: 'Live Chat', icon: MessageSquare, color: 'from-cyan-500 to-cyan-600', description: 'Chat dengan user/mitra' },
+    { id: 'settings', title: 'Setting Aplikasi', icon: Settings, color: 'from-gray-500 to-gray-600', description: 'Pengaturan sistem' }
   ];
 
   useEffect(() => {
@@ -82,14 +84,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   };
 
   const handleMenuClick = (menuId: string, title: string) => {
-    if (menuId === 'logout') {
-      // Logout
-      localStorage.removeItem("admin_login");
-      toast.success("Logout berhasil!");
-      onLogout();
-      return;
-    }
-
     setCurrentView(menuId);
     toast.info(`Mengakses ${title}...`);
   };
@@ -130,97 +124,157 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   };
 
   const renderDashboard = () => (
-    <>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Selamat Datang, Administrator</h1>
+            <p className="text-blue-100">Kelola sistem SmartCare dengan mudah dan efisien</p>
+          </div>
+          <div className="hidden md:block">
+            <div className="bg-white/20 backdrop-blur rounded-full p-4">
+              <Shield className="w-8 h-8" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Balance Info */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Saldo Sistem</h2>
+          <Button variant="outline" size="sm">
+            <CreditCard className="w-4 h-4 mr-2" />
+            Kelola Saldo
+          </Button>
+        </div>
+        <div className="text-3xl font-bold text-gray-900">Rp 50.000.000</div>
+        <p className="text-sm text-gray-600 mt-1">Total saldo dalam sistem</p>
+      </div>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="animate-fade-in-up">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total User</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
-              </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl p-4 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total User</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
 
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Shield className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Mitra</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalPartners}</p>
-              </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Mitra</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalPartners}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Shield className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
 
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <CreditCard className="w-6 h-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending Top Up</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingTopups}</p>
-              </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending Top Up</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pendingTopups}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <CreditCard className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
 
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Pesanan</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalOrders.toLocaleString()}</p>
-              </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Pesanan</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <ShoppingCart className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Menu Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-gray-900">Menu Administrasi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {menuItems.map((item, index) => (
-              <div
-                key={item.id}
-                className="menu-card p-6 bg-white rounded-lg border border-gray-200 hover:border-gray-300 cursor-pointer animate-fade-in-up"
-                style={{ animationDelay: `${index * 0.05}s` }}
-                onClick={() => handleMenuClick(item.id, item.title)}
-              >
-                <div className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center mb-4`}>
-                  <item.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600">{item.description}</p>
-              </div>
-            ))}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Menu Administrasi</h2>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Cari menu..."
+              className="pl-10 w-64"
+            />
           </div>
-        </CardContent>
-      </Card>
-    </>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {menuItems.map((item, index) => (
+            <div
+              key={item.id}
+              className="group relative bg-white rounded-xl p-4 border-2 border-gray-100 hover:border-gray-200 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              onClick={() => handleMenuClick(item.id, item.title)}
+            >
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className={`w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
+                  <item.icon className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h3>
+                  <p className="text-xs text-gray-500 leading-tight">{item.description}</p>
+                </div>
+              </div>
+              
+              {/* Hover indicator */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Button 
+            onClick={() => handleMenuClick('partner_verification', 'Verifikasi Mitra')}
+            className="h-16 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+          >
+            <UserCheck className="w-5 h-5 mr-2" />
+            Verifikasi Mitra
+          </Button>
+          <Button 
+            onClick={() => handleMenuClick('topup_confirmation', 'Konfirmasi Top Up')}
+            className="h-16 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+          >
+            <CreditCard className="w-5 h-5 mr-2" />
+            Konfirmasi Top Up
+          </Button>
+          <Button 
+            onClick={() => handleMenuClick('manual_balance', 'Kirim Saldo Manual')}
+            className="h-16 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+          >
+            <Send className="w-5 h-5 mr-2" />
+            Kirim Saldo Manual
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -231,7 +285,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
               <div className="flex items-center ml-4 lg:ml-0">
-                <Shield className="w-8 h-8 text-blue-600 mr-3" />
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">SmartCare Admin</h1>
                   <p className="text-sm text-gray-500">Dashboard Administratif</p>
@@ -245,10 +301,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   onClick={() => setCurrentView('dashboard')}
                   variant="outline"
                   size="sm"
+                  className="hidden sm:flex"
                 >
                   Dashboard
                 </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+              </Button>
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-gray-900">Administrator</p>
                 <p className="text-xs text-gray-500">Super Admin</p>
