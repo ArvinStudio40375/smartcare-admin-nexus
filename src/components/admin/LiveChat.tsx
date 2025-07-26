@@ -40,6 +40,9 @@ const LiveChat: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Generate a consistent admin UUID (you can also store this in your database)
+  const ADMIN_UUID = '00000000-0000-0000-0000-000000000000';
+
   useEffect(() => {
     loadChatRooms();
   }, []);
@@ -68,7 +71,9 @@ const LiveChat: React.FC = () => {
         if (!roomMap.has(message.room_id)) {
           const userName = message.sender_type === 'member' 
             ? `Member ${message.sender_id.substring(0, 8)}` 
-            : `Partner ${message.sender_id.substring(0, 8)}`;
+            : message.sender_type === 'partner'
+            ? `Partner ${message.sender_id.substring(0, 8)}`
+            : 'Admin';
             
           roomMap.set(message.room_id, {
             room_id: message.room_id,
@@ -77,7 +82,9 @@ const LiveChat: React.FC = () => {
             unread_count: message.sender_type !== 'admin' && !message.is_read ? 1 : 0,
             sender_type: message.sender_type,
             user_name: userName,
-            user_avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.sender_id}`,
+            user_avatar: message.sender_type === 'admin' 
+              ? `https://api.dicebear.com/7.x/avataaars/svg?seed=admin`
+              : `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.sender_id}`,
             is_online: Math.random() > 0.5 // Simulasi status online
           });
         } else {
@@ -127,13 +134,17 @@ const LiveChat: React.FC = () => {
         .from('chat_messages')
         .insert({
           room_id: selectedRoom,
-          sender_id: 'admin',
+          sender_id: ADMIN_UUID,
           sender_type: 'admin',
           content: newMessage.trim(),
+          message_type: 'text',
           is_read: false
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
 
       setNewMessage('');
       loadMessages(selectedRoom);
@@ -141,7 +152,7 @@ const LiveChat: React.FC = () => {
       toast.success('Pesan berhasil dikirim');
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Gagal mengirim pesan');
+      toast.error('Gagal mengirim pesan: ' + (error as any).message);
     } finally {
       setSendingMessage(false);
     }
@@ -242,10 +253,12 @@ const LiveChat: React.FC = () => {
                             className={`text-xs ${
                               room.sender_type === 'member' 
                                 ? 'bg-blue-100 text-blue-800 border-blue-200' 
-                                : 'bg-green-100 text-green-800 border-green-200'
+                                : room.sender_type === 'partner'
+                                ? 'bg-green-100 text-green-800 border-green-200'
+                                : 'bg-purple-100 text-purple-800 border-purple-200'
                             }`}
                           >
-                            {room.sender_type === 'member' ? 'Member' : 'Partner'}
+                            {room.sender_type === 'member' ? 'Member' : room.sender_type === 'partner' ? 'Partner' : 'Admin'}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2">
